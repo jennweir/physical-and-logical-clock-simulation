@@ -1,6 +1,10 @@
 # ==========================================
 # PART 1: PHYSICAL CLOCKS (NTP Simulation)
 # ==========================================
+# The Algorithm: In the provided PhysicalNode class, implement the NTP four-way message exchange. You must capture timestamps T_1, T_2, T_3, and T_4. Then, implement the standard NTP formulas:
+# Round-Trip Delay: delta = (T_4 - T_1) - (T_3 - T_2)
+# Clock Offset: theta = frac{(T_2 - T_1) + (T_3 - T_4)}{2}
+# Adjust the client's clock by adding the calculated offset (theta).
 class PhysicalNode:
     def __init__(self, node_id, clock):
         self.node_id = node_id
@@ -26,11 +30,15 @@ class PhysicalNode:
         
         t4 = self.clock # T4: Client records time response received
         
-        # TODO: Implement NTP Algorithm
-        # 1. Calculate Delay (delta)
-        # 2. Calculate Offset (theta)
+        # NTP Algorithm
+        # The T1–T4 timestamps allow NTP to estimate both how much the local clock differs from the server's clock (offset)
+        # and how long messages take to travel back and forth (delay)
+        # 1. Calculate Delay (delta) - represents network latency + processing time
+        delay_delta = (t4 - t1) - (t3 - t2)
+        # 2. Calculate Offset (theta) - represents estimated diffs between the client's clock and the server's clock
+        offset_theta = ((t2 - t1) + (t3 - t4)) / 2
         # 3. Update self.clock by adding the Offset
-        pass 
+        self.clock += offset_theta
 
 def run_ntp_simulation(send_latency, return_latency):
     server = PhysicalNode("server", 100)
@@ -50,19 +58,19 @@ class LogicalNode:
         self.clock = 0
 
     def local_event(self):
-        # TODO: Implement Lamport rule for a local event
-        pass
+        # before executing event, increment the local counter by one
+        self.clock += 1
         print(f"{self.name} local event. Clock is now: {self.clock}")
 
     def send_message(self, receiver):
-        # TODO: Implement Lamport rule for sending a message
-        pass
+        # update counter and include timestamp in message
+        self.clock += 1
         print(f"{self.name} sends message. Clock is now: {self.clock}")
         return self.clock
 
     def receive_message(self, sender_name, msg_clock):
-        # TODO: Implement Lamport rule for receiving a message
-        pass
+        # upon receiving a message, a process updates its local counter to the maximum of its current counter and the received timestamp, plus one
+        self.clock = max(self.clock, msg_clock) + 1
         print(f"{self.name} receives message from {sender_name}. Clock is now: {self.clock}")
 
 def run_logical_simulation():
