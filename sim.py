@@ -33,18 +33,21 @@ class PhysicalNode:
         # NTP Algorithm
         # The T1–T4 timestamps allow NTP to estimate both how much the local clock differs from the server's clock (offset)
         # and how long messages take to travel back and forth (delay)
-        # 1. Calculate Delay (delta) - represents network latency + processing time
+        # 1. Delay (delta) - represents network latency + processing time
         delay_delta = (t4 - t1) - (t3 - t2)
-        # 2. Calculate Offset (theta) - represents estimated diffs between the client's clock and the server's clock
-        offset_theta = ((t2 - t1) + (t3 - t4)) / 2
-        # 3. Update self.clock by adding the Offset
+        # 2. Calculate offset (theta) - represents estimated diffs between the client's clock and the server's clock
+        # Remove the server's processing time to avoid affecting client's own clock
+        offset_theta = (((t2 - t1) + (t3 - t4)) / 2) - server_processing_time
+        # 3. Update self.clock by adding the offset
         self.clock += offset_theta
+        # Remove server processing time from server's clock so that it does not affect the server's own clock
+        server.clock -= server_processing_time
 
 def run_ntp_simulation(send_latency, return_latency):
     server = PhysicalNode("server", 100)
     client = PhysicalNode("client", 50)
 
-    print(f"\n--- NTP Clocks | Latencies -> Send: {send_latency}, Return: {return_latency} ---")
+    print(f"\n--- Physical Clocks | Latencies -> Send: {send_latency}, Return: {return_latency} ---")
     client.send_request(server, send_latency, return_latency)
     print(f"After Sync: Server clock: {server.clock}, Client clock: {client.clock}")
     print(f"Final Skew (Server - Client): {server.clock - client.clock}")
